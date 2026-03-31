@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Triple S+ Stock System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="login-page">
+    <div class="login-card">
+        <div class="login-header">
+            <h2>TRIPLE S+<br>
+                Stock System</span></h2>
+            <p>กรุณาเข้าสู่ระบบเพื่อจัดการคลังสินค้า</p>
+        </div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="email@example.com" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-login">เข้าสู่ระบบ</button>
+            <p id="error-msg" class="error-text"></p>
+        </form>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gewmcomtwmjsdduygjxz.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdld21jb210d21qc2RkdXlnanh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NTc2NTUsImV4cCI6MjA5MDUzMzY1NX0.jS9Jr86-jNG7EltnA1HenSiTXhppw4FG2tGffSZ66RU';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // ถ้า login อยู่แล้วให้ไปหน้า index
+        window.onload = async () => {
+            const { data } = await supabaseClient.auth.getSession();
+            if (data.session) window.location.href = 'index.html';
+        };
+
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                document.getElementById('error-msg').innerText = "อีเมลหรือรหัสผ่านไม่ถูกต้อง";
+            } else {
+                window.location.href = 'index.html';
+            }
+        };
+    </script>
+</body>
+</html>
