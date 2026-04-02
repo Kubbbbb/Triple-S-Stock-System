@@ -559,8 +559,27 @@ table th:first-child {
     background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8;
 }
 
+/* ปรับแต่งปุ่มยกเลิก/สแกนใหม่ ให้ไอคอนและข้อความอยู่บรรทัดเดียวกัน */
 .btn-cancel {
-    background: #f1f5f9; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;
+    display: inline-flex;     /* ใช้ inline-flex เพื่อให้ปุ่มกว้างเท่ากับเนื้อหา */
+    align-items: center;      /* จัดไอคอนและตัวอักษรให้อยู่กึ่งกลางแนวตั้งพร้อมกัน */
+    justify-content: center;  /* จัดให้อยู่กึ่งกลางแนวนอน */
+    gap: 8px;                 /* เพิ่มระยะห่างระหว่างไอคอนกับตัวหนังสือ */
+    white-space: nowrap;      /* ป้องกันไม่ให้ตัวหนังสือตกลงไปอีกบรรทัด */
+    
+    /* สไตล์เดิมที่มีอยู่แล้ว (ตรวจสอบให้แน่ใจว่าไม่ได้ลบทิ้ง) */
+    background: #f1f5f9;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-main);
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+    background: #e2e8f0;
 }
 
 .btn-save-confirm {
@@ -799,4 +818,381 @@ tbody tr:hover {
 @media (max-width: 800px) {
     .detail-grid { grid-template-columns: 1fr; }
     .detail-left-image { max-width: 300px; margin: 0 auto; }
+}
+
+/* Scanner UI Styles */
+
+/* 1. จัดตำแหน่ง Section ทั้งหมดให้อยู่ตรงกลางหน้าจอ */
+#scanner-section {
+    display: none; 
+    padding: 40px 20px;
+    min-height: 80vh;
+    display: flex;
+    justify-content: center; /* จัดกลางแนวนอน */
+    align-items: flex-start; /* เริ่มจากด้านบนแต่มี padding */
+}
+
+/* 2. คอนเทนเนอร์หลักที่หุ้ม กล้อง และ ผลลัพธ์ */
+.scanner-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* แบ่งซ้ายขวา */
+    gap: 30px;
+    width: 100%;
+    max-width: 1100px; /* จำกัดความกว้างไม่ให้แผ่เต็มจอเกินไป */
+    margin: 0 auto; /* สั่งให้กล่องรวมอยู่ตรงกลาง */
+}
+
+/* 3. สไตล์ของ Card ทั้งฝั่งซ้าย (กล้อง) และฝั่งขวา (ผลลัพธ์) */
+.scanner-card, .scanner-result-side {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    border: 1px solid #f1f5f9;
+    height: 100%; /* ให้ความสูงเท่ากัน */
+}
+
+/* ฝั่งกล้องสแกน */
+.scanner-card {
+    text-align: center;
+}
+
+.scanner-header {
+    margin-bottom: 20px;
+}
+
+.scanner-header h3 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--sidebar-bg);
+    margin: 0;
+}
+
+#reader-wrapper {
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+    border: 2px solid #f8fafc;
+}
+
+/* ปรับแต่ง Video ของ html5-qrcode */
+#reader video {
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+#reader__scan_region {
+    background: #000;
+}
+
+.scanner-tip {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 15px;
+}
+
+/* ฝั่งผลลัพธ์การสแกน */
+.scanner-result-side {
+    display: flex;
+    flex-direction: column;
+    min-height: 480px; /* ความสูงขั้นต่ำให้ดูสมดุลกับกล้อง */
+}
+
+.placeholder-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1; /* จัดให้อยู่กึ่งกลางในแนวตั้งของ Card */
+    color: #cbd5e1;
+    text-align: center;
+}
+
+/* Result Card Details */
+.result-card h3 {
+    margin: 15px 0 25px 0;
+    font-size: 1.6rem;
+    color: var(--sidebar-bg);
+}
+
+.badge {
+    background: var(--sidebar-active);
+    color: white;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    display: inline-block;
+}
+
+.res-details-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.res-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #f8fafc;
+}
+
+.res-info-row .label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+.res-info-row .value {
+    font-weight: 500;
+    color: var(--text-main);
+    text-align: right;
+}
+
+.result-actions {
+    margin-top: auto; /* ดันปุ่มไปไว้ล่างสุดของ Card */
+    display: flex;
+    gap: 12px;
+    padding-top: 20px;
+}
+
+/* Responsive: สำหรับ Tablet และมือถือ */
+@media (max-width: 1000px) {
+    #scanner-section {
+        padding: 20px;
+    }
+    .scanner-container {
+        grid-template-columns: 1fr; /* เปลี่ยนเป็นแถวเดียว */
+        max-width: 550px; /* บีบให้แคบลงเพื่อให้เล็งกล้องง่าย */
+    }
+    .scanner-result-side {
+        min-height: auto;
+    }
+}
+
+
+/* สถานะปกติของเมนู */
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    background: none;
+    border: none;
+    color: #94a3b8; /* สีเทาจาง */
+    text-align: left;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+/* เมื่อเมาส์ชี้ */
+.menu-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+/* เมื่อถูกเลือก (Active) - สีฟ้า */
+.menu-item.active {
+    background: var(--sidebar-active) !important; /* ใช้สีหลัก #3b82f6 */
+    color: white !important;
+}
+
+/* ไอคอนในเมนูที่ถูกเลือก */
+.menu-item.active i {
+    color: white !important;
+}
+
+/* ปุ่ม Logout ไม่ต้องเป็นสีฟ้า */
+.logout-btn.active {
+    background: rgba(225, 29, 72, 0.2) !important;
+    color: #fda4af !important;
+}
+
+
+/* แถบเลือกตารางเป้าหมายในหน้า Scanner */
+.scanner-table-selector-bar {
+    max-width: 1100px;
+    margin: 0 auto 20px auto;
+    background: white;
+    padding: 15px 25px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border: 1px solid #f1f5f9;
+}
+
+.scanner-table-selector-bar label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    color: var(--sidebar-bg);
+}
+
+.table-options {
+    display: flex;
+    gap: 10px;
+}
+
+/* ปุ่มเลือกตาราง (Tab) */
+.tab-select {
+    padding: 8px 20px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    color: var(--text-muted);
+}
+
+.tab-select:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.tab-select.active {
+    background: var(--sidebar-active);
+    color: white;
+    border-color: var(--sidebar-active);
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+
+/* ปรับระยะห่างปุ่มลองสแกนใหม่ */
+.btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .scanner-table-selector-bar {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+}
+
+.highlight-input {
+    border-color: #10b981 !important;
+    background-color: #f0fdf4 !important;
+    animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* ปรับปรุงปุ่มในหน้า Scanner ให้ดูดีขึ้นเมื่อแสดงคำถาม */
+.placeholder-content .btn-add, 
+.placeholder-content .btn-cancel {
+    font-size: 1rem;
+    padding: 12px;
+}
+
+/* Container รวมส่วนควบคุม Scanner */
+.scanner-controls-container {
+    max-width: 1100px;
+    margin: 0 auto 20px auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.scanner-control-group {
+    background: white;
+    padding: 15px 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border: 1px solid #f1f5f9;
+}
+
+.scanner-control-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+/* Operation Options */
+.operation-options {
+    display: flex;
+    gap: 10px;
+}
+
+.op-select {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.3s;
+    color: var(--text-muted);
+}
+
+.op-select i { width: 18px; height: 18px; }
+
+/* โหมดบวก */
+.op-select.plus.active {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+}
+
+/* โหมดลบ */
+.op-select.minus.active {
+    background: #ef4444;
+    color: white;
+    border-color: #ef4444;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+}
+
+@media (max-width: 768px) {
+    .scanner-controls-container { grid-template-columns: 1fr; }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+#scan-result-card {
+    transition: all 0.3s ease;
+}
+
+/* เพิ่มเอฟเฟกต์เล็กน้อยตอนสแกนสำเร็จ */
+.result-card {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }

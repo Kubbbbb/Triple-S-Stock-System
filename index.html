@@ -6,6 +6,7 @@
     <title>Triple S+ Stock System</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
@@ -33,6 +34,7 @@
                 </div>
             </div>
 
+            <!-- ค้นหา <nav class="menu"> ใน index.html -->
             <nav class="menu">
                 <button class="menu-item active" onclick="switchTab(event,'floor2')">
                     <i data-lucide="layers"></i> Floor 2
@@ -42,6 +44,9 @@
                 </button>
                 <button class="menu-item" onclick="switchTab(event,'old_stock')">
                     <i data-lucide="archive"></i> Old Stock
+                </button>
+                <button class="menu-item" onclick="switchTab(event,'scanner')">
+                    <i data-lucide="scan"></i> Scanner
                 </button>
             </nav>
         </div>
@@ -103,8 +108,75 @@
             <tbody id="tbody"></tbody>
         </table>
     </div>
+
+   <!-- ค้นหา <div id="scanner-section"> ใน index.html แล้วอัปเดตตามนี้ -->
+<div id="scanner-section" style="display: none;">
+    <div class="scanner-controls-container">
+        <!-- 1. เลือกตาราง (Table Selector เดิม) -->
+        <div class="scanner-control-group">
+            <label><i data-lucide="database"></i> ตารางเป้าหมาย (กรณีเพิ่มใหม่):</label>
+            <div class="table-options">
+                <button class="tab-select active" onclick="setScanTarget('floor2', this)">Floor 2</button>
+                <button class="tab-select" onclick="setScanTarget('floor3', this)">Floor 3</button>
+                <button class="tab-select" onclick="setScanTarget('old_stock', this)">Old Stock</button>
+            </div>
+        </div>
+
+        <!-- 2. เลือกโหมด เพิ่ม/ลด (Operation Selector ใหม่) -->
+        <div class="scanner-control-group">
+            <label><i data-lucide="settings-2"></i> โหมดการสแกน:</label>
+            <div class="operation-options">
+                <button class="op-select active plus" onclick="setScanOperation('plus', this)">
+                    <i data-lucide="plus-circle"></i> เพิ่มจำนวน (+1)
+                </button>
+                <button class="op-select minus" onclick="setScanOperation('minus', this)">
+                    <i data-lucide="minus-circle"></i> ลดจำนวน (-1)
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ส่วน scanner-container ด้านล่างยังคงเหมือนเดิม -->
+    <div class="scanner-container">
+        <!-- ฝั่งซ้าย: กล้องสแกน (คงเดิม) -->
+        <div class="scanner-view-side">
+            <div class="scanner-card">
+                <div class="scanner-header">
+                    <h3><i data-lucide="scan-line"></i> เครื่องสแกนบาร์โค้ด</h3>
+                </div>
+                <div id="reader-wrapper">
+                    <div id="reader"></div>
+                </div>
+                <p class="scanner-tip">สแกนเพื่อค้นหาข้อมูลในตารางที่เลือก</p>
+            </div>
+        </div>
+
+        <!-- ฝั่งขวา: แสดงผล (คงเดิม) -->
+        <div class="scanner-result-side">
+            <div id="scan-placeholder" class="placeholder-content">
+                <i data-lucide="package-search" size="48"></i>
+                <p>รอผลการสแกนข้อมูล...</p>
+            </div>
+
+            <div id="scan-result-card" class="result-card" style="display: none;">
+                <div class="result-header">
+                    <span id="res-tab-label" class="badge">Floor 2</span>
+                    <h3 id="res-title">ชื่อสินค้า</h3>
+                </div>
+                <div id="res-details-list" class="res-details-grid"></div>
+                <div class="result-actions">
+                    <button class="btn-edit-mode" id="btn-go-detail">
+                        <i data-lucide="external-link"></i> ดูรายละเอียดเต็ม
+                    </button>
+                    <button class="btn-cancel" onclick="scanAgain()">
+                        <i data-lucide="refresh-cw"></i> ลองสแกนใหม่
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
-</div>
+
 
 
 <!-- Modal สำหรับแก้ไขข้อมูล -->
