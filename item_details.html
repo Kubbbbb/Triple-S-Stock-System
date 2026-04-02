@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Details - Triple S+</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-light">
+    <div class="form-page-container">
+        <div class="form-card detail-max-card">
+            <div class="form-header">
+                <button class="btn-back" onclick="window.history.back()">
+                    <i data-lucide="arrow-left"></i> กลับหน้าหลัก
+                </button>
+                <h2 id="detail-title">รายละเอียดรายการ</h2>
+            </div>
+
+            <div id="loading" style="text-align:center; padding: 60px;">
+                <div class="loader"></div>
+                <p style="margin-top:15px; color:#64748b;">กำลังโหลดข้อมูล...</p>
+            </div>
+
+            <div id="detail-layout" class="detail-grid" style="display:none;">
+                <!-- ฝั่งซ้าย: รูปภาพ -->
+                <div class="detail-left-image">
+                    <div class="image-box">
+                        <img id="itemImage" src="https://via.placeholder.com/400x400?text=No+Image" alt="Item Image">
+                        <div class="image-upload-overlay" onclick="document.getElementById('itemImageInput').click()">
+                            <i data-lucide="camera"></i> <span>อัปโหลดรูปภาพ</span>
+                        </div>
+                    </div>
+                    <input type="file" id="itemImageInput" hidden accept="image/*" onchange="uploadItemImage(this)">
+                    <p class="image-tip">* คลิกที่รูปเพื่อเปลี่ยนรูปภาพสินค้า</p>
+                </div>
+
+                <!-- ฝั่งขวา: ข้อมูลรายการ -->
+                <div class="detail-right-info">
+                    <div id="info-list" class="info-list-container">
+                        <!-- รายการข้อมูลจะถูกสร้างที่นี่ -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-actions detail-footer">
+                <button class="btn-add" onclick="window.print()" style="background:#64748b;">
+                    <i data-lucide="printer"></i> พิมพ์ใบรายละเอียด
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gewmcomtwmjsdduygjxz.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdld21jb210d21qc2RkdXlnanh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NTc2NTUsImV4cCI6MjA5MDUzMzY1NX0.jS9Jr86-jNG7EltnA1HenSiTXhppw4FG2tGffSZ66RU';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const itemId = urlParams.get('id');
+        const tabName = urlParams.get('tab');
+
+        window.onload = async () => {
+            lucide.createIcons();
+            if (!itemId || !tabName) {
+                alert("ไม่พบข้อมูล");
+                window.location.href = 'index.html';
+                return;
+            }
+            fetchItemDetails();
+        };
+
+        async function fetchItemDetails() {
+            const { data, error } = await supabaseClient
+                .from(tabName)
+                .select("*")
+                .eq('id', itemId)
+                .single();
+
+            if (error || !data) {
+                document.getElementById('loading').innerHTML = "<p style='color:red;'>ไม่พบข้อมูลรายการนี้</p>";
+                return;
+            }
+
+            // แสดงรูปภาพ (ถ้ามีใน DB)
+            if (data.image_url) {
+                document.getElementById('itemImage').src = data.image_url;
+            }
+
+            // ตั้งชื่อหัวข้อ
+            document.getElementById('detail-title').innerText = data.item || data.name || data.name_detail || "รายละเอียดสินค้า";
+
+            const infoContainer = document.getElementById('info-list');
+            const labels = {
+                type: 'ประเภท (Type)', item: 'ชื่อรายการ (Item)', unit: 'หน่วย (Unit)', 
+                qty: 'จำนวน (QTY)', price: 'ราคาต่อหน่วย (Price)', amount: 'ราคารวม (Amount)', 
+                date: 'วันที่ (Date)', brand: 'แบรนด์ (Brand)', code: 'รหัส (Code)', 
+                name: 'ชื่อ (Name)', color: 'สี (Color)', name_detail: 'รายละเอียด (Detail)', 
+                incoming_date: 'วันที่เข้า (Incoming)', remaining: 'คงเหลือ (Remaining)', 
+                location: 'สถานที่เก็บ (Location)'
+            };
+
+            let html = "";
+            Object.keys(data).forEach(key => {
+                if (['id', 'created_at', 'image_url'].includes(key)) return;
+                
+                let value = data[key];
+                if (typeof value === 'number') value = value.toLocaleString();
+                if (!value) value = "-";
+
+                html += `
+                    <div class="info-row">
+                        <span class="info-label">${labels[key] || key.toUpperCase()}</span>
+                        <span class="info-value">${value}</span>
+                    </div>
+                `;
+            });
+
+            infoContainer.innerHTML = html;
+            document.getElementById('loading').style.display = "none";
+            document.getElementById('detail-layout').style.display = "grid";
+        }
+
+        async function uploadItemImage(input) {
+            if (!input.files || input.files.length === 0) return;
+            const file = input.files[0];
+            const imgEl = document.getElementById('itemImage');
+            imgEl.style.opacity = "0.5";
+
+            try {
+                const fileExt = file.name.split('.').pop();
+                const filePath = `${itemId}-${Date.now()}.${fileExt}`;
+
+                // 1. อัปโหลดไป Storage (Bucket: profiles หรือสร้างใหม่ชื่อ items)
+                const { error: uploadError } = await supabaseClient.storage
+                    .from('items') 
+                    .upload(filePath, file);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabaseClient.storage
+                    .from('items')
+                    .getPublicUrl(filePath);
+
+                // 2. อัปเดต image_url ลงในตารางสินค้านั้นๆ (ต้องมีคอลัมน์ image_url ในตารางด้วย)
+                const { error: updateError } = await supabaseClient
+                    .from(tabName)
+                    .update({ image_url: publicUrl })
+                    .eq('id', itemId);
+
+                if (updateError) {
+                    // ถ้าตารางไม่มีคอลัมน์ image_url ให้แจ้งเตือน
+                    console.error("ตารางนี้อาจไม่มีคอลัมน์ image_url:", updateError.message);
+                    alert("บันทึกรูปภาพลงฐานข้อมูลไม่สำเร็จ (กรุณาเพิ่มคอลัมน์ image_url ในตาราง " + tabName + ")");
+                }
+
+                imgEl.src = publicUrl;
+                alert("อัปโหลดรูปสินค้าเรียบร้อย");
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                imgEl.style.opacity = "1";
+            }
+        }
+    </script>
+</body>
+</html>

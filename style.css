@@ -51,8 +51,8 @@ body { margin: 0; background-color: var(--bg-light); color: var(--text-main); }
 .logout-btn:hover { background: rgba(225, 29, 72, 0.2) !important; }
 
 /* Main Content */
-.main-content { flex: 1; margin-left: 260px; padding: 30px; }
-.top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+.main-content { flex: 1; margin-left: 260px; padding: 30px; padding-top: 10px;}
+
 .table-container { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
 table { width: 100%; border-collapse: collapse; }
 th { text-align: left; padding: 15px 12px; background: #f1f5f9; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; }
@@ -250,22 +250,70 @@ table th:first-child {
     background-color: #ebf0f5; /* เน้นสีพื้นหลังหัวตารางช่องแรก */
 }
 
-/* --- ส่วนค้นหาและปุ่มเพิ่มรายการ --- */
+/* --- ปรับแต่ง Search Container ให้ยาวชิดขอบซ้าย-ขวา --- */
 .search-container {
-    margin: 20px 0 25px 0;
+    position: sticky;
+    top: -30px;            /* เลื่อนขึ้นไปแปะขอบบนสุด (สัมพันธ์กับ padding ของ main-content) */
+    z-index: 100;
+    background-color: var(--bg-light); 
+    
+    /* ขยายแถบให้ชิดขอบโดยใช้ค่าลบ (เพื่อหักล้าง padding 30px ของ main-content) */
+    margin-left: -10px;    
+    margin-right: -30px;   
+    margin-top: -30px;     /* ดันขึ้นไปชิดขอบบน */
+    margin-bottom: 20px;   /* ระยะห่างจากตารางด้านล่าง */
+
+    /* ใส่ padding กลับคืนมาเพื่อให้เนื้อหา (ช่องค้นหา/ปุ่ม) กลับมาตรงกับแนวตาราง */
+    padding: 15px 30px;    
+    
     display: flex;
-    justify-content: space-between; /* ดันสมาชิกใน flex ให้แยกจากกัน (ซ้าย-ขวา) */
-    align-items: center; /* จัดให้อยู่กึ่งกลางแนวตั้งพร้อมกัน */
+    justify-content: space-between;
+    align-items: center;
     gap: 20px;
+
+    /* เส้นขอบด้านล่างจางๆ เพื่อให้เห็นความต่างเวลาเลื่อนทับข้อมูล */
+    border-bottom: 1px solid #e2e8f0; 
+}
+
+/* --- ส่วนหัว Title และ Subtitle --- */
+.top-bar { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 30px; /* เพิ่มระยะห่างก่อนถึงแถบค้นหา */
+}
+
+.search-box i {
+    position: absolute;
+    left: 15px;
+    color: var(--text-muted);
+    z-index: 1;
+    pointer-events: none; /* ให้คลิกทะลุไอคอนไปที่ input ได้ */
+}
+
+/* รีเซ็ต margin ของ input เพื่อไม่ให้ระยะห่างเพี้ยน */
+.search-box input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    outline: none;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    transition: all 0.2s ease;
+    margin-left: 10px; /* เปลี่ยนจาก 10px เป็น 0 เพื่อให้ความสูงของแถวไม่ล้น */
 }
 
 .search-box {
-    position: relative; /* เพื่อให้ไอคอนอ้างอิงตำแหน่งในกรอบนี้ */
-    flex: 1; /* ให้ช่องค้นหาขยายพื้นที่เท่าที่ทำได้ */
+    position: relative;
+    flex: 1;
     max-width: 450px;
     display: flex;
     align-items: center;
 }
+
+
 
 /* ช่องกรอกข้อมูล */
 .search-box input {
@@ -377,56 +425,138 @@ table th:first-child {
     background: #10b981 !important; /* เปลี่ยนเป็นสีเขียวเมื่อเปิดโหมดแก้ไข */
 }
 
-/* --- Modal Styles --- */
+/* --- แก้ไขสไตล์ Modal ให้รองรับเนื้อหาเยอะๆ --- */
+
 .modal-overlay {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
     background: rgba(0, 0, 0, 0.5);
-    display: none; /* ซ่อนไว้เริ่มต้น */
+    display: none; 
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    backdrop-filter: blur(4px); /* พื้นหลังเบลอ */
+    backdrop-filter: blur(4px);
+    padding: 20px; /* เพิ่ม padding กันขอบจอ */
 }
 
 .modal-card {
     background: white;
-    width: 90%;
+    width: 100%;
     max-width: 650px;
+    max-height: 90vh; /* ให้สูงได้ไม่เกิน 90% ของหน้าจอ */
     padding: 25px;
     border-radius: 16px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column; /* จัด Header, Body, Footer เรียงกัน */
     animation: slideUp 0.3s ease-out;
 }
 
-@keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+/* ทำให้ส่วนฟอร์มเลื่อนขึ้นลงได้ถ้าเนื้อหาล้น */
+#addForm, #editForm {
+    overflow-y: auto; /* เพิ่ม Scrollbar แนวตั้ง */
+    padding-right: 10px; /* เว้นที่ให้ Scrollbar */
+    margin-top: 10px;
 }
 
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #f1f5f9;
-    padding-bottom: 15px;
+/* ปรับแต่ง Scrollbar ให้ดูสวย (เลือกใส่หรือไม่ก็ได้) */
+#addForm::-webkit-scrollbar, 
+#editForm::-webkit-scrollbar {
+    width: 6px;
+}
+#addForm::-webkit-scrollbar-thumb, 
+#editForm::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
 }
 
-.modal-header h3 { margin: 0; color: var(--sidebar-bg); }
-
-.btn-close {
-    background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8;
+.grid-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px; /* ลด gap ลงเล็กน้อย */
+    padding-bottom: 10px;
 }
 
 .modal-footer {
-    margin-top: 25px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #f1f5f9;
+    background: white; /* ให้ปุ่มติดอยู่กับที่ */
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    border-top: 1px solid #f1f5f9;
-    padding-top: 20px;
+    flex-shrink: 0; /* กันส่วนท้ายโดนบีบ */
+}
+
+/* สำหรับมือถือ ให้แสดงแถวเดียว */
+@media (max-width: 600px) {
+    .grid-fields {
+        grid-template-columns: 1fr;
+    }
+    .modal-card {
+        padding: 15px;
+        max-height: 95vh;
+    }
+}
+
+/* --- ปรับแต่ง Modal Header ให้ไอคอนตรงกับข้อความและกากบาทอยู่มุมขวา --- */
+
+.modal-header {
+    display: flex;
+    justify-content: space-between; /* ดันหัวข้อไปซ้าย ดันปุ่มปิดไปขวา */
+    align-items: center;           /* จัดให้อยู่กึ่งกลางแนวตั้งพร้อมกัน */
+    margin-bottom: 20px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 15px;
+    flex-shrink: 0;                /* กันส่วนหัวโดนบีบ */
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: var(--sidebar-bg);
+    display: flex;                 /* ใช้ flex เพื่อจัดไอคอนกับข้อความ */
+    align-items: center;           /* จัดไอคอนกับตัวหนังสือให้ตรงกันเป๊ะ */
+    gap: 10px;                     /* ระยะห่างระหว่างไอคอนกับข้อความ */
+    font-size: 1.2rem;
+}
+
+/* ปรับแต่งไอคอนในหัวข้อให้ขนาดพอดี */
+.modal-header h3 i {
+    width: 24px;
+    height: 24px;
+    color: var(--sidebar-active);
+}
+
+.btn-close {
+    background: #f8fafc;           /* พื้นหลังจางๆ ให้ดูเป็นปุ่ม */
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #94a3b8;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;            /* ทำเป็นวงกลม */
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.btn-close:hover {
+    background: #fee2e2;           /* สีพื้นหลังเมื่อเมาส์ชี้ (สีแดงอ่อน) */
+    color: #ef4444;                /* สีตัวอักษรเมื่อเมาส์ชี้ (สีแดง) */
+    transform: rotate(90deg);      /* หมุนเล็กน้อยเวลาชี้ให้ดูมีลูกเล่น */
+}
+
+/* ปรับแต่ง Scrollbar ของ Form (เพิ่มเติมเพื่อให้ดูสะอาดตา) */
+#addForm, #editForm {
+    padding-right: 8px;
+}
+
+.btn-close {
+    background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8;
 }
 
 .btn-cancel {
@@ -440,3 +570,233 @@ table th:first-child {
 
 .btn-save-confirm:hover { background: #059669; }
 
+/* สไตล์สำหรับ Input เมื่ออยู่ในโหมดแก้ไขในตาราง */
+.inline-edit-input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    background-color: #fff;
+    transition: all 0.2s;
+}
+
+.inline-edit-input:focus {
+    border-color: var(--sidebar-active);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    background-color: #f0f9ff;
+}
+
+/* ปรับให้ตารางดูแน่นขึ้นเมื่อแก้ข้อมูล */
+.main-content.edit-active td {
+    padding: 8px 10px; /* ลด padding เพื่อให้ input ไม่ทำให้แถวสูงเกินไป */
+}
+
+/* สีปุ่มบันทึกเมื่ออยู่ในโหมดแก้ไข */
+.btn-edit-mode.active {
+    background-color: #10b981 !important; /* สีเขียว */
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* ทำให้ Search Container ติดหนึบ */
+.search-container {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: var(--bg-light);
+    padding: 15px 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* User Profile Bar ใน Sidebar Footer */
+.user-profile-bar {
+    display: flex;
+    align-items: center; /* จัดให้อยู่กึ่งกลางแนวนอนพร้อมกัน */
+    gap: 12px;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.avatar-container {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    min-width: 38px; /* กันรูปโดนบีบ */
+    border-radius: 50%;
+    cursor: pointer;
+    overflow: hidden;
+    border: 1.5px solid var(--sidebar-active);
+}
+
+.avatar-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ไอคอนกล้องตอนเอาเมาส์วางบนรูป */
+.avatar-hover-icon {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.avatar-container:hover .avatar-hover-icon {
+    opacity: 1;
+}
+
+/* ส่วนของ Email */
+.user-info-text {
+    flex: 1;
+    overflow: hidden; /* กัน Email ยาวเกินล้น Sidebar */
+}
+
+#userEmail {
+    display: block;
+    font-size: 0.85rem;
+    color: #e2e8f0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* แสดง ... ถ้า Email ยาวเกินไป */
+}
+
+.logout-btn {
+    margin-top: 5px;
+}
+
+/* เมื่อเอาเมาส์ชี้ที่แถวในตาราง */
+tbody tr {
+    transition: background-color 0.2s;
+}
+
+tbody tr:hover {
+    background-color: #f1f5f9 !important; /* ไฮไลท์สีเมื่อเมาส์ชี้ */
+}
+
+/* ป้องกันปุ่มแก้ไขไม่ให้โดนเอฟเฟกต์การคลิกของแถว */
+.manage-column button {
+    position: relative;
+    z-index: 2;
+}
+
+/* --- รายละเอียดสินค้า (Item Details Layout) --- */
+
+.detail-max-card {
+    max-width: 950px !important;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 400px 1fr; /* แบ่งซ้าย 400px ขวาที่เหลือ */
+    gap: 40px;
+    margin-top: 20px;
+}
+
+/* ฝั่งซ้าย: รูปภาพ */
+.detail-left-image {
+    text-align: center;
+}
+
+.image-box {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1/1; /* ทำให้เป็นสี่เหลี่ยมจตุรัสเสมอ */
+    background: #f1f5f9;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 2px dashed #cbd5e1;
+    cursor: pointer;
+}
+
+.image-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: 0.3s;
+}
+
+.image-upload-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transition: 0.3s;
+}
+
+.image-box:hover .image-upload-overlay { opacity: 1; }
+.image-box:hover img { transform: scale(1.05); }
+
+.image-tip {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-top: 10px;
+}
+
+/* ฝั่งขวา: ข้อมูล */
+.info-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.info-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+.info-value {
+    color: var(--text-main);
+    font-weight: 500;
+    font-size: 1rem;
+    text-align: right;
+}
+
+.detail-footer {
+    border-top: 1px solid #f1f5f9;
+    padding-top: 30px;
+    margin-top: 30px;
+}
+
+/* Loader */
+.loader {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--sidebar-active);
+    border-radius: 50%;
+    width: 40px; height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* รองรับมือถือ */
+@media (max-width: 800px) {
+    .detail-grid { grid-template-columns: 1fr; }
+    .detail-left-image { max-width: 300px; margin: 0 auto; }
+}

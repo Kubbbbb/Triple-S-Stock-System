@@ -1,12 +1,47 @@
+// --- 1. ตั้งค่า Supabase ---
 const SUPABASE_URL = 'https://gewmcomtwmjsdduygjxz.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdld21jb210d21qc2RkdXlnanh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NTc2NTUsImV4cCI6MjA5MDUzMzY1NX0.jS9Jr86-jNG7EltnA1HenSiTXhppw4FG2tGffSZ66RU';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// --- 2. ตัวแปรควบคุมระบบ ---
 let currentTab = 'floor2';
 let allData = []; 
-let isEditMode = false; // ตัวแปรเช็คสถานะโหมดแก้ไข
+let isEditMode = false;
+let pendingChanges = {}; // เก็บข้อมูลที่ถูกแก้ไข { id: { field: value } }
 
-// --- ระบบ Auth ---
+// --- 3. โครงสร้างฟิลด์ข้อมูล ---
+const fieldsConfig = {
+    floor2: [
+        { id: 'type', type: 'text' },
+        { id: 'item', type: 'text' },
+        { id: 'unit', type: 'text' },
+        { id: 'qty', type: 'number' },
+        { id: 'date', type: 'date' },
+        { id: 'price', type: 'number' },
+        { id: 'amount', type: 'number', readonly: true }
+    ],
+    floor3: [
+        { id: 'brand', type: 'text' },
+        { id: 'code', type: 'text' },
+        { id: 'type', type: 'text' },
+        { id: 'name', type: 'text' },
+        { id: 'color', type: 'text' },
+        { id: 'qty', type: 'number' },
+        { id: 'price', type: 'number' }
+    ],
+    old_stock: [
+        { id: 'type', type: 'text' },
+        { id: 'name_detail', type: 'text' },
+        { id: 'incoming_date', type: 'date' },
+        { id: 'remaining', type: 'number' },
+        { id: 'location', type: 'text' }
+    ]
+};
+
+// ==========================================
+//    ระบบ Auth & Navigation
+// ==========================================
+
 async function logout() {
     if (confirm("ยืนยันการออกจากระบบ?")) {
         await supabaseClient.auth.signOut();
@@ -14,267 +49,295 @@ async function logout() {
     }
 }
 
-// --- การนำทางและแท็บ ---
 function switchTab(e, tab) {
+    if (Object.keys(pendingChanges).length > 0) {
+        if (!confirm("คุณมีการแก้ไขที่ยังไม่ได้บันทึก ต้องการเปลี่ยนหน้าโดยไม่บันทึกหรือไม่?")) return;
+    }
     currentTab = tab;
-    isEditMode = false; // ปิดโหมดแก้ไขทุกครั้งที่เปลี่ยนหน้า
+    isEditMode = false;
+    pendingChanges = {}; 
     
     document.querySelectorAll('.menu-item').forEach(btn => btn.classList.remove('active'));
-    e.currentTarget.classList.add('active');
+    if(e) e.currentTarget.classList.add('active');
     
-    // รีเซ็ตปุ่มแก้ไขด้านบน
     const btnEdit = document.querySelector('.btn-edit-mode');
-    if(btnEdit) {
-        btnEdit.innerHTML = '<i data-lucide="edit-3"></i> แก้ไขรายการ';
-        btnEdit.classList.remove('active');
-    }
-    document.querySelector('.main-content').classList.remove('edit-active');
-
-    // ล้างค่าค้นหา
+    btnEdit.innerHTML = '<i data-lucide="edit-3"></i> แก้ไขรายการ';
+    btnEdit.classList.remove('active');
+    
     document.getElementById("searchInput").value = "";
-
     const titleMap = { floor2: "Floor 2", floor3: "Floor 3", old_stock: "Old Stock Archive" };
     document.getElementById("title").innerText = titleMap[tab];
     fetchData();
 }
 
-function goToAddPage() {
-    window.location.href = `add_item.html?tab=${currentTab}`;
-}
+// ==========================================
+//    ส่วนของ POPUP: เพิ่มรายการใหม่ (ADD)
+// ==========================================
 
-let currentEditId = null; // เก็บ ID ที่กำลังแก้ไข
-
-// --- ฟังก์ชันเปิด Modal เพื่อแก้ไข ---
-function editItem(id) {
-    currentEditId = id;
-    const item = allData.find(d => d.id === id);
-    if (!item) return;
-
-
-    const modal = document.getElementById("editModal");
-    const container = document.getElementById("modal-fields");
+function openAddModal() {
+    const modal = document.getElementById("addModal");
+    const container = document.getElementById("add-modal-fields");
     container.innerHTML = "";
 
-    const config = {
-        floor2: [
-            { label: 'Type', key: 'type', type: 'text' },
-            { label: 'Item', key: 'item', type: 'text' },
-            { label: 'Unit', key: 'unit', type: 'text' },
-            { label: 'QTY', key: 'qty', type: 'number' },
-            { label: 'Price', key: 'price', type: 'number' },
-            { label: 'Amount (Auto)', key: 'amount', type: 'number', readonly: true, required: false },
-            { label: 'Date', key: 'date', type: 'date' }
-        ],
-        floor3: [
-            { label: 'Brand', key: 'brand', type: 'text' },
-            { label: 'Code', key: 'code', type: 'text' },
-            { label: 'Type', key: 'type', type: 'text' },
-            { label: 'Name', key: 'name', type: 'text' },
-            { label: 'Color', key: 'color', type: 'text' },
-            { label: 'QTY', key: 'qty', type: 'number' },
-            { label: 'Price', key: 'price', type: 'number' }
-        ],
-        old_stock: [
-            { label: 'Type', key: 'type', type: 'text' },
-            { label: 'Detail', key: 'name_detail', type: 'text' },
-            { label: 'Incoming Date', key: 'incoming_date', type: 'date' },
-            { label: 'Remaining', key: 'remaining', type: 'number' },
-            { label: 'Location', key: 'location', type: 'text' }
-        ]
-    };
+    const addFields = [
+        { label: 'ประเภท (Type)', id: 'type', type: 'text' },
+        { label: 'ชื่อรายการ (Item)', id: 'item', type: 'text' },
+        { label: 'หน่วย (Unit)', id: 'unit', type: 'text' },
+        { label: 'จำนวน (QTY)', id: 'qty', type: 'number' },
+        { label: 'ราคาต่อหน่วย (Price)', id: 'price', type: 'number' },
+        { label: 'ราคารวม (Amount)', id: 'amount', type: 'number', readonly: true, required: false },
+        { label: 'วันที่ (Date)', id: 'date', type: 'date', value: new Date().toISOString().split('T')[0] }
+    ];
 
-    const fields = config[currentTab];
+    // หมายเหตุ: ใช้ config เฉพาะสำหรับการ Add เพื่อความสวยงามใน Modal
+    let fieldsToRender = (currentTab === 'floor2') ? addFields : fieldsConfig[currentTab].map(f => ({...f, label: f.id.toUpperCase()}));
 
-    fields.forEach(f => {
-        container.innerHTML += `
-            <div class="form-group">
-                <label>${f.label}</label>
-                <input 
-                    type="${f.type}" 
-                    id="edit-${f.key}" 
-                    value="${item[f.key] ?? ''}" 
-                    ${f.readonly ? 'readonly style="background:#f8fafc;cursor:not-allowed;"' : ''}
-                    ${f.required === false ? '' : 'required'}
-                >
-            </div>
+    fieldsToRender.forEach(f => {
+        const div = document.createElement('div');
+        div.className = 'form-group';
+        div.innerHTML = `
+            <label>${f.label || f.id}</label>
+            <input type="${f.type}" id="add-${f.id}" ${f.readonly ? 'readonly' : ''} ${f.value ? `value="${f.value}"` : ''} required>
         `;
+        container.appendChild(div);
     });
 
-    // ✅ Auto calculate (Floor 2)
     if (currentTab === 'floor2') {
-        const qInput = document.getElementById('edit-qty');
-        const pInput = document.getElementById('edit-price');
-        const aInput = document.getElementById('edit-amount');
-
         const calc = () => {
-            const q = parseFloat(qInput.value) || 0;
-            const p = parseFloat(pInput.value) || 0;
-            aInput.value = (q * p).toFixed(2);
+            const q = document.getElementById('add-qty').value;
+            const p = document.getElementById('add-price').value;
+            document.getElementById('add-amount').value = (q * p).toFixed(2);
         };
-
-        qInput.oninput = calc;
-        pInput.oninput = calc;
+        document.getElementById('add-qty').oninput = calc;
+        document.getElementById('add-price').oninput = calc;
     }
 
-modal.style.display = "flex";
-lucide.createIcons();
-
-
+    modal.style.display = "flex";
+    lucide.createIcons();
 }
 
-
-function closeEditModal() {
-    document.getElementById("editModal").style.display = "none";
+function closeAddModal() {
+    document.getElementById("addModal").style.display = "none";
 }
 
-/// --- ฟังก์ชันบันทึกข้อมูลที่แก้ไขไปยัง Supabase ---
-document.getElementById("editForm").onsubmit = async (e) => {
+document.getElementById('addForm').onsubmit = async (e) => {
     e.preventDefault();
-
-
-    const btn = document.getElementById("btnSaveModal");
+    const btn = document.getElementById('btnSaveAdd');
     btn.innerText = "กำลังบันทึก...";
     btn.disabled = true;
 
-    // รวบรวมข้อมูลจาก Modal
-    const updateData = {};
-    const inputs = document.querySelectorAll("#modal-fields input");
-
-    inputs.forEach(input => {
-        const key = input.id.replace("edit-", "");
-
-        if (key === 'amount') return; // 🚨 แก้ตรงนี้ (สำคัญมาก)
-
-        const val = input.value;
-        updateData[key] = (input.type === 'number') ? parseFloat(val) || 0 : val;
+    const payload = {};
+    fieldsConfig[currentTab].forEach(f => {
+        if (f.id === 'amount') return;
+        const val = document.getElementById(`add-${f.id}`).value;
+        payload[f.id] = (f.type === 'number') ? parseFloat(val) || 0 : val;
     });
 
-    // ส่งคำสั่ง Update ไปยัง Supabase
-    const { error } = await supabaseClient
-        .from(currentTab)
-        .update(updateData)
-        .eq('id', currentEditId);
-
-    if (error) {
-        alert("เกิดข้อผิดพลาด: " + error.message);
-        btn.innerText = "บันทึกการเปลี่ยนแปลง";
-        btn.disabled = false;
-    } else {
-        alert("แก้ไขข้อมูลสำเร็จ!");
-        closeEditModal();
-        fetchData();
-    }
-
-
+    const { error } = await supabaseClient.from(currentTab).insert([payload]);
+    if (error) alert(error.message);
+    else { alert("บันทึกสำเร็จ"); closeAddModal(); fetchData(); }
+    btn.innerText = "บันทึกข้อมูลรายการ";
+    btn.disabled = false;
 };
 
+// ==========================================
+//    ระบบแก้ไขในตาราง (INLINE EDIT & BULK SAVE)
+// ==========================================
 
-// --- ฟังก์ชันเปิด/ปิดโหมดแก้ไข (แสดง/ซ่อนดินสอ) ---
-function toggleEditMode() {
-    isEditMode = !isEditMode;
+function trackChange(id, field, value, type) {
+    if (!pendingChanges[id]) pendingChanges[id] = {};
+    let finalValue = (type === 'number') ? parseFloat(value) || 0 : value;
+    pendingChanges[id][field] = finalValue;
+
+    // สูตรคำนวณ Floor 2
+    if (currentTab === 'floor2' && (field === 'qty' || field === 'price')) {
+        const row = allData.find(d => d.id === id);
+        const q = (field === 'qty') ? finalValue : (pendingChanges[id]['qty'] ?? row.qty);
+        const p = (field === 'price') ? finalValue : (pendingChanges[id]['price'] ?? row.price);
+        const amt = (q * p).toFixed(2);
+        const amtDisplay = document.getElementById(`display-${id}-amount`);
+        if (amtDisplay) amtDisplay.innerText = Number(amt).toLocaleString();
+        pendingChanges[id]['amount'] = parseFloat(amt);
+    }
+}
+
+async function toggleEditMode() {
     const btn = document.querySelector('.btn-edit-mode');
-    const mainContent = document.querySelector('.main-content');
-
-    if (isEditMode) {
-        btn.innerHTML = '<i data-lucide="check-circle"></i> เสร็จสิ้นการแก้ไข';
+    if (!isEditMode) {
+        isEditMode = true;
+        btn.innerHTML = '<i data-lucide="save"></i> บันทึกการแก้ไขทั้งหมด';
         btn.classList.add('active');
-        mainContent.classList.add('edit-active'); // CSS จะสั่งให้ .manage-column แสดงผล
+        renderTable(allData);
     } else {
-        btn.innerHTML = '<i data-lucide="edit-3"></i> แก้ไขรายการ';
-        btn.classList.remove('active');
-        mainContent.classList.remove('edit-active'); // CSS จะสั่งให้ .manage-column ซ่อนไป
+        if (Object.keys(pendingChanges).length > 0) {
+            await saveBulkChanges();
+        } else {
+            isEditMode = false;
+            btn.innerHTML = '<i data-lucide="edit-3"></i> แก้ไขรายการ';
+            btn.classList.remove('active');
+            renderTable(allData);
+        }
     }
     lucide.createIcons();
 }
 
-// --- จัดการข้อมูล ---
+async function saveBulkChanges() {
+    const btn = document.querySelector('.btn-edit-mode');
+    btn.innerHTML = "กำลังบันทึก...";
+    btn.disabled = true;
+
+    try {
+        const promises = Object.keys(pendingChanges).map(id => 
+            supabaseClient.from(currentTab).update(pendingChanges[id]).eq('id', id)
+        );
+        await Promise.all(promises);
+        alert(`บันทึกการแก้ไขทั้งหมด ${Object.keys(pendingChanges).length} รายการสำเร็จ`);
+        pendingChanges = {};
+        isEditMode = false;
+        btn.innerHTML = '<i data-lucide="edit-3"></i> แก้ไขรายการ';
+        btn.classList.remove('active');
+        fetchData();
+    } catch (err) {
+        alert("เกิดข้อผิดพลาดในการบันทึก");
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// ==========================================
+//    ระบบจัดการตารางและการแสดงผล
+// ==========================================
+
 async function fetchData() {
     const tbody = document.getElementById("tbody");
     tbody.innerHTML = "<tr><td colspan='12' style='text-align:center;'>กำลังโหลดข้อมูล...</td></tr>";
-
-    const { data, error } = await supabaseClient.from(currentTab).select("*");
-    
-    if (error) {
-        console.error(error);
-        tbody.innerHTML = "<tr><td colspan='12' style='text-align:center; color:red;'>เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>";
-        return;
-    }
-
+    const { data, error } = await supabaseClient.from(currentTab).select("*").order('type', { ascending: true }); 
+    if (error) return;
     allData = data;
     renderTable(data);
 }
 
-function handleSearch() {
-    const keyword = document.getElementById("searchInput").value.toLowerCase();
-    const filteredData = allData.filter(item => {
-        return Object.values(item).some(val => 
-            String(val).toLowerCase().includes(keyword)
-        );
-    });
-    renderTable(filteredData);
-}
-
-// --- แสดงผลตาราง ---
 function renderTable(data) {
     const thead = document.getElementById("thead");
     const tbody = document.getElementById("tbody");
+    thead.innerHTML = ""; tbody.innerHTML = "";
 
-    thead.innerHTML = "";
-    tbody.innerHTML = "";
+    let headers = [];
+    if (currentTab === "floor2") headers = ["No.", "Type", "Item", "Unit", "QTY", "Date", "Price", "Amount"];
+    else if (currentTab === "floor3") headers = ["No.", "Brand", "Code", "Type", "Name", "Color", "QTY", "Price"];
+    else if (currentTab === "old_stock") headers = ["No.", "Type", "Detail", "Incoming", "Remaining", "Location"];
 
-    if (!data || data.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='12' style='text-align:center; padding: 40px;'>ไม่พบข้อมูล</td></tr>";
-        return;
-    }
+    thead.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join("")}${isEditMode ? '' : '<th class="manage-column">Manage</th>'}</tr>`;
 
-    // สร้างหัวตาราง (เพิ่มคลาส manage-column เพื่อรอการซ่อน/แสดง)
-    if (currentTab === "floor2") {
-        thead.innerHTML = `<tr>
-            <th style="width: 50px;">No.</th>
-            <th>Type</th><th>Item</th><th>Unit</th><th>QTY</th><th>Date</th><th>Price</th><th>Amount</th>
-            <th class="manage-column" style="width: 80px; text-align:center;">Manage</th>
-        </tr>`;
-    } else if (currentTab === "floor3") {
-        thead.innerHTML = `<tr>
-            <th style="width: 50px;">No.</th>
-            <th>Brand</th><th>Code</th><th>Type</th><th>Name</th><th>Color</th><th>QTY</th><th>Price</th>
-            <th class="manage-column" style="width: 80px; text-align:center;">Manage</th>
-        </tr>`;
-    } else if (currentTab === "old_stock") {
-        thead.innerHTML = `<tr>
-            <th style="width: 50px;">No.</th>
-            <th>Type</th><th>Detail</th><th>Incoming</th><th>Remaining</th><th>Location</th>
-            <th class="manage-column" style="width: 80px; text-align:center;">Manage</th>
-        </tr>`;
-    }
-
-    // สร้างแถวข้อมูล
     data.forEach((r, index) => {
-        let rowHTML = `<tr><td>${index + 1}</td>`;
+    const tr = document.createElement("tr");
+    
+    // เพิ่ม CSS ให้เมาส์เป็นรูปมือ และเมื่อคลิกจะไปหน้ารายละเอียด (ยกเว้นตอนกดปุ่มแก้ไข)
+    tr.style.cursor = "pointer";
+    tr.onclick = (e) => {
+        // ถ้าคลิกโดนปุ่มแก้ไข หรืออยู่ในโหมดแก้ไข ไม่ต้องไปหน้าใหม่
+        if (e.target.closest('.manage-column') || isEditMode) return;
+        window.location.href = `item_details.html?id=${r.id}&tab=${currentTab}`;
+    };
+        let html = `<td>${index + 1}</td>`;
+        
+        fieldsConfig[currentTab].forEach(f => {
+            let val = r[f.id] ?? '-';
+            if (isEditMode && f.id !== 'amount') {
+                html += `<td><input type="${f.type}" class="inline-edit-input" value="${val}" oninput="trackChange('${r.id}', '${f.id}', this.value, '${f.type}')"></td>`;
+            } else {
+                let displayVal = (f.id === 'amount') ? `<span id="display-${r.id}-amount">${Number(val).toLocaleString()}</span>` : (typeof val === 'number' ? val.toLocaleString() : val);
+                html += `<td>${displayVal}</td>`;
+            }
+        });
 
-        if (currentTab === "floor2") {
-            rowHTML += `<td>${r.type || '-'}</td><td>${r.item || '-'}</td><td>${r.unit || '-'}</td><td>${Number(r.qty || 0).toLocaleString()}</td><td>${r.date || '-'}</td><td>${Number(r.price || 0).toLocaleString()}</td><td>${Number(r.amount || 0).toLocaleString()}</td>`;
-        } else if (currentTab === "floor3") {
-            rowHTML += `<td>${r.brand || '-'}</td><td><code style="background:#f1f5f9;padding:2px 5px;border-radius:4px;">${r.code || '-'}</code></td><td>${r.type || '-'}</td><td>${r.name || '-'}</td><td>${r.color || '-'}</td><td>${Number(r.qty || 0).toLocaleString()}</td><td>${Number(r.price || 0).toLocaleString()}</td>`;
-        } else if (currentTab === "old_stock") {
-            rowHTML += `<td>${r.type || '-'}</td><td>${r.name_detail || '-'}</td><td>${r.incoming_date || '-'}</td><td><b style="color:#e11d48;">${Number(r.remaining || 0).toLocaleString()}</b></td><td><span style="background:#e2e8f0;padding:2px 8px;border-radius:10px;font-size:0.85rem;">${r.location || '-'}</span></td>`;
+        if (!isEditMode) {
+            html += `<td class="manage-column" style="text-align:center;"><button class="btn-row-edit" onclick="isEditMode=false; toggleEditMode();"><i data-lucide="edit-2"></i></button></td>`;
         }
-
-        // เพิ่มปุ่มแก้ไข (มีคลาส manage-column เพื่อให้ซ่อน/แสดง)
-        rowHTML += `
-            <td class="manage-column" style="text-align:center;">
-                <button class="btn-row-edit" onclick="editItem('${r.id}')" title="แก้ไขรายการ">
-                    <i data-lucide="edit-2"></i>
-                </button>
-            </td>
-        </tr>`;
-
-        tbody.innerHTML += rowHTML;
+        tr.innerHTML = html;
+        tbody.appendChild(tr);
     });
-
     lucide.createIcons();
 }
 
-// โหลดข้อมูลครั้งแรก
-fetchData();
+function handleSearch() {
+    const keyword = document.getElementById("searchInput").value.toLowerCase();
+    const filtered = allData.filter(item => Object.values(item).some(v => String(v).toLowerCase().includes(keyword)));
+    renderTable(filtered);
+}
 
+window.onload = fetchData;
+
+// --- เพิ่ม/แก้ไข ฟังก์ชันเหล่านี้ใน script.js ---
+
+async function loadUserProfile() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (user) {
+        // แสดง Email
+        document.getElementById('userEmail').innerText = user.email;
+
+        // ดึงรูปโปรไฟล์จาก metadata
+        const avatarUrl = user.user_metadata?.avatar_url;
+        const avatarImg = document.getElementById('userAvatar');
+        
+        if (avatarUrl) {
+            avatarImg.src = avatarUrl;
+        } else {
+            // ถ้าไม่มีรูป ให้ใช้ชื่อย่อจาก Email สร้างรูป
+            avatarImg.src = `https://ui-avatars.com/api/?name=${user.email}&background=random&color=fff`;
+        }
+    }
+}
+
+async function uploadAvatar(input) {
+    if (!input.files || input.files.length === 0) return;
+    
+    const file = input.files[0];
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+
+    const avatarImg = document.getElementById('userAvatar');
+    const originalSrc = avatarImg.src;
+    avatarImg.style.opacity = "0.4"; // แสดงสถานะกำลังโหลด
+
+    try {
+        const fileExt = file.name.split('.').pop();
+        const filePath = `private/${user.id}-${Date.now()}.${fileExt}`;
+
+        // 1. อัปโหลดไปที่ Storage (Bucket: profiles)
+        const { error: uploadError } = await supabaseClient.storage
+            .from('profiles')
+            .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        // 2. ดึง URL สาธารณะ
+        const { data: { publicUrl } } = supabaseClient.storage
+            .from('profiles')
+            .getPublicUrl(filePath);
+
+        // 3. อัปเดตข้อมูล User Metadata
+        const { error: updateError } = await supabaseClient.auth.updateUser({
+            data: { avatar_url: publicUrl }
+        });
+
+        if (updateError) throw updateError;
+
+        avatarImg.src = publicUrl;
+        alert("อัปเดตโปรไฟล์สำเร็จ");
+
+    } catch (error) {
+        alert("อัปโหลดไม่สำเร็จ: " + error.message);
+        avatarImg.src = originalSrc;
+    } finally {
+        avatarImg.style.opacity = "1";
+    }
+}
+
+// เรียกใช้งานเมื่อโหลดหน้า
+const currentOnload = window.onload;
+window.onload = () => {
+    if (currentOnload) currentOnload();
+    loadUserProfile();
+    lucide.createIcons();
+};
