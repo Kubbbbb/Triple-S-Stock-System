@@ -55,15 +55,26 @@
             </nav>
         </div>
         
+        <!-- ค้นหาไฟล์ index.html ส่วน sidebar-footer และแก้ตามนี้ -->
+        <!-- ค้นหาไฟล์ index.html ส่วน sidebar-footer -->
         <div class="sidebar-footer">
             <div class="user-profile-bar">
-                <div class="avatar-container" onclick="document.getElementById('avatarInput').click()">
+                <!-- กล่องวงกลมที่มี Overlay ซ่อนอยู่ -->
+                <div class="avatar-container" onclick="document.getElementById('profileInput').click()">
                     <img id="userAvatar" src="https://ui-avatars.com/api/?name=User&background=random" alt="Avatar">
+                    <div class="avatar-upload-overlay">
+                        <i data-lucide="camera"></i>
+                    </div>
                 </div>
+                
                 <div class="user-info-text">
                     <span id="userEmail">loading...</span>
                 </div>
             </div>
+            
+            <!-- Input สำหรับเลือกไฟล์ -->
+            <input type="file" id="profileInput" hidden accept="image/*" onchange="uploadAvatar(this)">
+
             <button class="menu-item logout-btn" onclick="logout()">
                 <i data-lucide="log-out"></i> Logout
             </button>

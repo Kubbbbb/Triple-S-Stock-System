@@ -894,3 +894,59 @@ switchTab = (e, tab) => {
 document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
 });
+
+// เพิ่มการเรียกใช้ loadUserProfile() ในส่วนที่เกี่ยวข้อง
+async function loadUserProfile() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (user) {
+        document.getElementById('userEmail').innerText = user.email;
+        const avatarUrl = user.user_metadata?.avatar_url;
+        const avatarImg = document.getElementById('userAvatar');
+        
+        if (avatarUrl) {
+            avatarImg.src = avatarUrl;
+        } else {
+            avatarImg.src = `https://ui-avatars.com/api/?name=${user.email}&background=random&color=fff`;
+        }
+    }
+    // สำคัญ: สร้างไอคอน Lucide ใหม่หลังจากโหลดข้อมูลเสร็จ
+    lucide.createIcons();
+}
+
+// แก้ไขบรรทัดนี้ในฟังก์ชัน uploadAvatar ในไฟล์ script.js
+async function uploadAvatar(input) {
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    
+    const avatarImg = document.getElementById('userAvatar');
+    avatarImg.style.opacity = "0.3"; 
+
+    try {
+        const fileExt = file.name.split('.').pop();
+        
+        // --- แก้ไขบรรทัดข้างล่างนี้ จาก avatars/ เป็น private/ ---
+        const filePath = `private/${user.id}-${Date.now()}.${fileExt}`; 
+
+        const { error: uploadError } = await supabaseClient.storage
+            .from('profiles')
+            .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabaseClient.storage
+            .from('profiles')
+            .getPublicUrl(filePath);
+
+        await supabaseClient.auth.updateUser({
+            data: { avatar_url: publicUrl }
+        });
+
+        avatarImg.src = publicUrl;
+        alert("อัปเดตโปรไฟล์สำเร็จ");
+    } catch (err) {
+        alert("Error: " + err.message);
+    } finally {
+        avatarImg.style.opacity = "1";
+    }
+}
