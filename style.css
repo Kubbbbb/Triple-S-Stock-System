@@ -278,7 +278,7 @@ input, textarea { font-family: inherit; }
 .main-content {
     flex: 1;
     margin-left: var(--sidebar-w);
-    padding: 28px 28px 40px;
+    padding: 0 28px 40px; /* ลด padding top เป็น 0 เพราะใช้จาก top-bar แล้ว */
     min-height: 100vh;
     transition: margin 0.3s ease;
 }
@@ -287,7 +287,12 @@ input, textarea { font-family: inherit; }
 .top-bar {
     display: flex;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 0; /* ลด margin ออก */
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg); /* พื้นหลังสีเดียวกับตัวเว็บ */
+    padding: 20px 0 10px 0; /* เพิ่มพื้นที่หายใจข้างบน */
 }
 
 #title { font-size: var(--text-lg); font-weight: 600; color: var(--text); }
@@ -319,6 +324,13 @@ input, textarea { font-family: inherit; }
     align-items: center;
     gap: var(--gap-sm);
     margin-bottom: 16px;
+    
+    /* ส่วนที่เพิ่มใหม่เพื่อให้ Sticky */
+    position: sticky;
+    top: 68px; /* ระยะห่างจากด้านบน (ประมาณความสูงของ top-bar) */
+    z-index: 90;
+    background: var(--bg); /* ต้องใส่พื้นหลังเพื่อไม่ให้ตัวหนังสือตารางทะลุขึ้นมา */
+    padding: 15px 0; /* เพิ่มพื้นที่คลิกและระยะห่าง */
 }
 
 .search-box {
@@ -924,6 +936,8 @@ table td:first-child, table th:first-child {
         top: var(--topbar-h);
         z-index: 80;
         margin-bottom: 0;
+        top: var(--topbar-h); /* 58px ตามตัวแปรที่ตั้งไว้ */
+        margin: 0; /* ให้เต็มขอบ */
     }
 
     .search-box { max-width: 100%; }
