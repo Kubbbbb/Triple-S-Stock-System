@@ -23,18 +23,22 @@
 
 <body>
 <div class="app-container">
+    <!-- Overlay for mobile (single instance) -->
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
+    <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-top">
             <div class="sidebar-header">
                 <div class="logo">
                     <i data-lucide="package"></i>
-                    <span>TRIPLE S+ <br>
-                    Stock System</span>
+                    <span>TRIPLE S+ <br> Stock System</span>
                 </div>
+                <button class="btn-close-sidebar" onclick="toggleSidebar()">
+                    <i data-lucide="x"></i>
+                </button>
             </div>
 
-            <!-- ค้นหา <nav class="menu"> ใน index.html -->
             <nav class="menu">
                 <button class="menu-item active" onclick="switchTab(event,'floor2')">
                     <i data-lucide="layers"></i> Floor 2
@@ -50,37 +54,34 @@
                 </button>
             </nav>
         </div>
-
+        
         <div class="sidebar-footer">
-            <!-- ส่วนโปรไฟล์ผู้ใช้แบบแถวเดียว -->
             <div class="user-profile-bar">
-                <div class="avatar-container" onclick="document.getElementById('avatarInput').click()" title="เปลี่ยนรูปโปรไฟล์">
+                <div class="avatar-container" onclick="document.getElementById('avatarInput').click()">
                     <img id="userAvatar" src="https://ui-avatars.com/api/?name=User&background=random" alt="Avatar">
-                    <div class="avatar-hover-icon">
-                        <i data-lucide="camera" style="width: 12px; height: 12px;"></i>
-                    </div>
                 </div>
                 <div class="user-info-text">
                     <span id="userEmail">loading...</span>
                 </div>
-                <input type="file" id="avatarInput" hidden accept="image/*" onchange="uploadAvatar(this)">
             </div>
-
             <button class="menu-item logout-btn" onclick="logout()">
                 <i data-lucide="log-out"></i> Logout
             </button>
         </div>
     </aside>
 
-    <!-- ค้นหาส่วน <main class="main-content"> ใน index.html แล้วเพิ่มส่วน search-container ลงไป -->
-<main class="main-content">
-    <header class="top-bar">
-        <div>
-            <h2 id="title">Floor 2</h2>
-            <div class="user-info">Inventory Management System</div>
-        </div>
-    </header>
-
+    <main class="main-content">
+        <header class="top-bar">
+            <div class="top-bar-left" style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                <button class="menu-toggle" onclick="toggleSidebar()">
+                    <i data-lucide="menu"></i>
+                </button>
+                <div>
+                    <h2 id="title">Floor 2</h2>
+                    <div class="user-info">Inventory Management System</div>
+                </div>
+            </div>
+        </header>
     
     <!-- แทนที่ส่วน search-container เดิมใน index.html -->
     <div class="search-container">
@@ -175,6 +176,7 @@
             </div>
         </div>
     </div>
+</div><!-- /#scanner-section -->
 </main>
 
 

@@ -59,11 +59,7 @@ th { text-align: left; padding: 15px 12px; background: #f1f5f9; color: var(--tex
 td { padding: 15px 12px; border-bottom: 1px solid #f1f5f9; }
 tr:hover td { background: #f8fafc; }
 
-@media (max-width: 768px) {
-    .sidebar { width: 100%; height: auto; position: relative; }
-    .main-content { margin-left: 0; }
-    .app-container { flex-direction: column; }
-}
+/* Mobile base reset handled in the main mobile block below */
 
 /* ปุ่ม Add ในหน้าหลัก */
 .btn-add {
@@ -822,24 +818,19 @@ tbody tr:hover {
 
 /* Scanner UI Styles */
 
-/* 1. จัดตำแหน่ง Section ทั้งหมดให้อยู่ตรงกลางหน้าจอ */
+/* Scanner section — display controlled by JS only */
 #scanner-section {
-    display: none; 
-    padding: 40px 20px;
-    min-height: 80vh;
-    display: flex;
-    justify-content: center; /* จัดกลางแนวนอน */
-    align-items: flex-start; /* เริ่มจากด้านบนแต่มี padding */
+    padding: 20px 0;
+    flex-direction: column;
+    align-items: stretch;
 }
 
 /* 2. คอนเทนเนอร์หลักที่หุ้ม กล้อง และ ผลลัพธ์ */
 .scanner-container {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* แบ่งซ้ายขวา */
+    grid-template-columns: 1fr 1fr;
     gap: 30px;
     width: 100%;
-    max-width: 1100px; /* จำกัดความกว้างไม่ให้แผ่เต็มจอเกินไป */
-    margin: 0 auto; /* สั่งให้กล่องรวมอยู่ตรงกลาง */
 }
 
 /* 3. สไตล์ของ Card ทั้งฝั่งซ้าย (กล้อง) และฝั่งขวา (ผลลัพธ์) */
@@ -1195,4 +1186,306 @@ tbody tr:hover {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================
+   ระบบ SIDEBAR & NAVIGATION (Desktop & Mobile)
+   ========================================== */
+
+/* --- Desktop Sidebar --- */
+.sidebar {
+    width: 260px;
+    background: var(--sidebar-bg);
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.main-content {
+    margin-left: 260px;
+    transition: margin 0.32s ease;
+    padding: 30px;
+}
+
+/* Header strip */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 15px 0;
+    margin-bottom: 20px;
+}
+
+/* Hamburger — hidden on desktop */
+.menu-toggle {
+    display: none;
+    background: white;
+    border: 1px solid #e2e8f0;
+    padding: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    cursor: pointer;
+    color: var(--sidebar-bg);
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.menu-toggle:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Overlay */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.visible {
+    opacity: 1;
+}
+
+/* Close X in sidebar */
+.btn-close-sidebar {
+    display: none;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.6);
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-close-sidebar:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+/* Sidebar header row */
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ==========================================
+   MOBILE (≤ 768px)
+   ========================================== */
+@media (max-width: 768px) {
+
+    /* Push sidebar fully off-screen */
+    .sidebar {
+        transform: translateX(-100%);
+        width: 280px;
+        box-shadow: none;
+    }
+
+    /* Slide in */
+    .sidebar.active {
+        transform: translateX(0);
+        box-shadow: 6px 0 32px rgba(0, 0, 0, 0.35);
+    }
+
+    /* Main content fills screen */
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0;
+    }
+
+    /* Show overlay when active */
+    .sidebar-overlay {
+        display: block;
+    }
+
+    /* Show X button inside sidebar */
+    .btn-close-sidebar {
+        display: flex;
+    }
+
+    /* ── TOP BAR (sticky header strip) ── */
+    .top-bar {
+        position: sticky;
+        top: 0;
+        z-index: 90;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        margin: 0;
+        background: white;
+        border-bottom: 1px solid #e8edf3;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .top-bar .top-bar-left {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        overflow: hidden;
+    }
+
+    .top-bar .top-bar-left > div {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    #title {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--sidebar-bg);
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .top-bar .user-info {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        white-space: nowrap;
+    }
+
+    /* Hamburger — fixed size, never overflow */
+    .menu-toggle {
+        display: flex !important;
+        flex-shrink: 0;
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px !important;
+        padding: 0;
+    }
+
+    /* ── SEARCH BAR ── */
+    .search-container {
+        position: sticky;
+        top: 65px; /* height of top-bar */
+        z-index: 80;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px 16px;
+        margin: 0;
+        background: var(--bg-light);
+        border-bottom: 1px solid #e8edf3;
+    }
+
+    .search-box {
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .search-actions {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .search-actions .btn-edit-mode,
+    .search-actions .btn-add {
+        flex: 1;
+        justify-content: center;
+        padding: 10px 12px;
+        font-size: 0.85rem;
+        height: 42px;
+        border-radius: 10px;
+    }
+
+    /* ── TABLE ── */
+    .table-container {
+        margin: 16px;
+        border-radius: 14px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        min-width: 500px;
+    }
+
+    th, td {
+        padding: 12px 10px;
+        font-size: 0.85rem;
+    }
+
+    /* ── MODALS ── */
+    .modal-card {
+        max-height: 92vh;
+        border-radius: 20px 20px 0 0;
+        margin-top: auto;
+    }
+
+    .modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .grid-fields {
+        grid-template-columns: 1fr;
+    }
+
+    /* ── SCANNER ── */
+    #scanner-section {
+        padding: 16px;
+    }
+
+    .scanner-controls-container {
+        grid-template-columns: 1fr;
+    }
+
+    .scanner-card, .scanner-result-side {
+        padding: 20px;
+    }
+
+    /* ── DETAIL PAGE ── */
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-page-container {
+        padding: 0;
+    }
+
+    .form-card {
+        border-radius: 0;
+        padding: 20px 16px;
+        box-shadow: none;
+        min-height: 100vh;
+    }
+
+    /* ── SCROLLABLE BODY ── */
+    body {
+        overflow-x: hidden;
+    }
 }

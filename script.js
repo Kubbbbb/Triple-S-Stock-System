@@ -446,7 +446,7 @@ async function switchTab(e, tab) {
     // -------------------------
 
     // 4. จัดการการแสดงผล Main Content (Logic เดิมที่ปรับปรุงเรื่อง Scanner)
-    const normalUI = document.querySelectorAll('.search-container, .table-container, .top-bar');
+    const normalUI = document.querySelectorAll('.search-container, .table-container');
     const scannerUI = document.getElementById('scanner-section');
 
     if (tab === 'scanner') {
@@ -851,3 +851,46 @@ async function processAutoUpdate(item, tableName) {
         displayScanResult(item, tableName, false);
     }
 }
+
+// --- เพิ่มฟังก์ชันควบคุม Sidebar ---
+
+function toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    const isOpen = sidebar.classList.toggle('active');
+    if (overlay) {
+        if (isOpen) {
+            overlay.style.display = 'block';
+            requestAnimationFrame(() => overlay.classList.add('visible'));
+        } else {
+            overlay.classList.remove('visible');
+            setTimeout(() => { overlay.style.display = 'none'; }, 300);
+        }
+    }
+}
+
+function closeSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    sidebar.classList.remove('active');
+    if (overlay) {
+        overlay.classList.remove('visible');
+        setTimeout(() => { overlay.style.display = 'none'; }, 300);
+    }
+}
+
+// ปิด Sidebar อัตโนมัติบนมือถือเมื่อเปลี่ยน Tab
+const originalSwitchTab = switchTab; 
+switchTab = (e, tab) => {
+    originalSwitchTab(e, tab);
+    if (window.innerWidth <= 768) {
+        closeSidebar();
+    }
+    lucide.createIcons();
+}
+
+
+// เพิ่มการตั้งค่า Lucide Icons ให้รองรับปุ่มเมนูใหม่
+document.addEventListener('DOMContentLoaded', () => {
+    lucide.createIcons();
+});
